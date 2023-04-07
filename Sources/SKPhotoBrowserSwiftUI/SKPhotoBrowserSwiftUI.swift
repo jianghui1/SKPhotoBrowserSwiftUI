@@ -7,7 +7,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         case bottom
     }
     
-    public let images: [UIImage]
+    @Binding public var images: [UIImage]
     public let page: Int
     public let backImage: UIImage?
     public let deleteImage: UIImage?
@@ -23,8 +23,8 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     public let counterLocaton: CounterLocation?
     public let counterExtraMarginY: CGFloat?
     
-    public init(images: [UIImage], page: Int, backImage: UIImage? = nil, deleteImage: UIImage? = nil, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
-        self.images = images
+    public init(images: Binding<[UIImage]>, page: Int, backImage: UIImage? = nil, deleteImage: UIImage? = nil, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
+        self._images = images
         self.page = page
         self.backImage = backImage
         self.deleteImage = deleteImage
@@ -196,6 +196,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         }
         
         public func removePhoto(_ browser: SKPhotoBrowser, index: Int, reload: @escaping (() -> Void)) {
+            parent.images.remove(at: index)
             reload()
         }
         
@@ -214,5 +215,26 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         public func captionViewForPhotoAtIndex(index: Int) -> SKCaptionView? {
             return nil
         }
+    }
+}
+
+extension View {
+    public func photoBrowser(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> SKPhotoBrowserSwiftUI) -> some View {
+        modifier(PhotoBrowserModifier(isPresented: isPresented, content: content))
+    }
+}
+
+private struct PhotoBrowserModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    let content: () -> SKPhotoBrowserSwiftUI
+    func body(content: Content) -> some View {
+        content
+            .fullScreenCover(isPresented: $isPresented) {
+                self.content()
+                    .ignoresSafeArea()
+            }
+            .transaction({ transaction in
+                transaction.disablesAnimations = true
+            })
     }
 }
