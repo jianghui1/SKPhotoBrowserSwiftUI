@@ -7,8 +7,8 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         case bottom
     }
     
-    @Binding public var images: [UIImage]?
-    @Binding public var urls: [String]?
+    @Binding public var images: [UIImage]
+    @Binding public var urls: [String]
     public let page: Int
     public let backImage: UIImage?
     public let deleteImage: UIImage?
@@ -24,7 +24,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     public let counterLocaton: CounterLocation?
     public let counterExtraMarginY: CGFloat?
     
-    public init(images: Binding<[UIImage]?> = .constant(nil), urls: Binding<[String]?> = .constant(nil), page: Int = 0, backImage: UIImage? = nil, deleteImage: UIImage? = nil, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
+    public init(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, backImage: UIImage? = nil, deleteImage: UIImage? = nil, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
         self._images = images
         self._urls = urls
         self.page = page
@@ -84,10 +84,10 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         SKPhotoBrowserOptions.displayPaginationView = false
         
         var photos: [SKPhotoProtocol] = []
-        if let images = images {
+        if !images.isEmpty {
             photos = images.map({ SKPhoto.photoWithImage($0) })
         }
-        if let urls = urls {
+        else if !urls.isEmpty {
             photos = urls.map({ SKPhoto.photoWithImageURL($0) })
         }
         let browser = SKPhotoBrowser(photos: photos, initialPageIndex: page)
@@ -205,8 +205,12 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         }
         
         public func removePhoto(_ browser: SKPhotoBrowser, index: Int, reload: @escaping (() -> Void)) {
-            parent.images?.remove(at: index)
-            parent.urls?.remove(at: index)
+            if index < parent.images.count {
+                parent.images.remove(at: index)
+            }
+            if index < parent.urls.count {
+                parent.urls.remove(at: index)
+            }
             reload()
         }
         
