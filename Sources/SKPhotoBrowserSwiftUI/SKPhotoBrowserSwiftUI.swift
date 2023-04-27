@@ -10,8 +10,10 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     @Binding public var images: [UIImage]
     @Binding public var urls: [String]
     public let page: Int
-    public let backImage: UIImage?
+    public let closeImage: UIImage?
     public let deleteImage: UIImage?
+    public let displayCloseButton: Bool
+    public let enableSingleTapDismiss: Bool
     public let displayDeleteButton: Bool?
     public let actionBackgroundColor: UIColor?
     public let actionTextColor: UIColor?
@@ -24,12 +26,16 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     public let counterLocaton: CounterLocation?
     public let counterExtraMarginY: CGFloat?
     
-    public init(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, backImage: UIImage? = nil, deleteImage: UIImage? = nil, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
+    
+    
+    public init(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil) {
         self._images = images
         self._urls = urls
         self.page = page
-        self.backImage = backImage
+        self.closeImage = closeImage
         self.deleteImage = deleteImage
+        self.displayCloseButton = displayCloseButton
+        self.enableSingleTapDismiss = enableSingleTapDismiss
         self.displayDeleteButton = displayDeleteButton
         self.actionBackgroundColor = actionBackgroundColor
         self.actionTextColor = actionTextColor
@@ -46,6 +52,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     public typealias UIViewControllerType = SKPhotoBrowser
     
     public func makeUIViewController(context: Context) -> SKPhotoBrowser {
+        SKPhotoBrowserOptions.displayCloseButton = displayCloseButton
         if let displayDeleteButton = displayDeleteButton {
             SKPhotoBrowserOptions.displayDeleteButton = displayDeleteButton
         }
@@ -82,6 +89,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         SKPhotoBrowserOptions.displayStatusbar = true
         SKPhotoBrowserOptions.displayAction = false
         SKPhotoBrowserOptions.displayPaginationView = false
+        SKPhotoBrowserOptions.enableSingleTapDismiss = enableSingleTapDismiss
         
         var photos: [SKPhotoProtocol] = []
         if !images.isEmpty {
@@ -101,7 +109,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     }
     
     public func makeCoordinator() -> Coordinator {
-        Coordinator(self, backImage: backImage, deleteImage: deleteImage, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY)
+        Coordinator(self, closeImage: closeImage, deleteImage: deleteImage, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY)
     }
     
     final public class Coordinator: SKPhotoBrowserDelegate {
@@ -122,7 +130,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         private var originalCounterLocaton: CounterLocation?
         private var originalCounterExtraMarginY: CGFloat?
         
-        init(_ parent: SKPhotoBrowserSwiftUI, backImage: UIImage?, deleteImage: UIImage?, displayDeleteButton: Bool?, actionBackgroundColor: UIColor?, actionTextColor: UIColor?, actionFont: UIFont?, actionTextShadowColor: UIColor?, closeButtonPadding: CGPoint?, closeButtonInsets: UIEdgeInsets?, deleteButtonPadding: CGPoint?, deleteButtonInsets: UIEdgeInsets?, counterLocaton: CounterLocation?, counterExtraMarginY: CGFloat?) {
+        init(_ parent: SKPhotoBrowserSwiftUI, closeImage: UIImage?, deleteImage: UIImage?, displayDeleteButton: Bool?, actionBackgroundColor: UIColor?, actionTextColor: UIColor?, actionFont: UIFont?, actionTextShadowColor: UIColor?, closeButtonPadding: CGPoint?, closeButtonInsets: UIEdgeInsets?, deleteButtonPadding: CGPoint?, deleteButtonInsets: UIEdgeInsets?, counterLocaton: CounterLocation?, counterExtraMarginY: CGFloat?) {
             self.parent = parent
             
             if displayDeleteButton != nil {
@@ -216,8 +224,8 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         
         public func viewForPhoto(_ browser: SKPhotoBrowser, index: Int) -> UIView? {
             
-            if let back = parent.backImage {
-                browser.updateCloseButton(back)
+            if let closeImage = parent.closeImage {
+                browser.updateCloseButton(closeImage)
             }
             if let delete = parent.deleteImage {
                 browser.updateDeleteButton(delete)
