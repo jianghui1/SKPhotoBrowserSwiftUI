@@ -26,8 +26,9 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
     public let counterLocaton: CounterLocation?
     public let counterExtraMarginY: CGFloat?
     public var loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)?
+    public var didShowPhotoAtIndex: ((Int) -> Void)?
     
-    public init(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil) {
+    public init(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil) {
         self._images = images
         self._urls = urls
         self.page = page
@@ -47,6 +48,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         self.counterLocaton = counterLocaton
         self.counterExtraMarginY = counterExtraMarginY
         self.loadImageBlock = loadImageBlock
+        self.didShowPhotoAtIndex = didShowPhotoAtIndex
     }
     
     public typealias UIViewControllerType = SKPhotoBrowser
@@ -168,8 +170,8 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
             }
         }
         
-        func didShowPhotoAtIndex(_ index: Int) {
-            
+        public func didShowPhotoAtIndex(_ browser: SKPhotoBrowser, index: Int) {
+            parent.didShowPhotoAtIndex?(index)
         }
         
         public func willDismissAtPageIndex(_ index: Int) {
