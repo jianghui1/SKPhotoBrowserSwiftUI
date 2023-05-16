@@ -92,6 +92,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
         SKPhotoBrowserOptions.displayAction = false
         SKPhotoBrowserOptions.displayPaginationView = false
         SKPhotoBrowserOptions.enableSingleTapDismiss = enableSingleTapDismiss
+        SKPhotoBrowserOptions.longPhotoWidthMatchScreen = true
         
         var photos: [SKPhotoProtocol] = []
         if !images.isEmpty {
