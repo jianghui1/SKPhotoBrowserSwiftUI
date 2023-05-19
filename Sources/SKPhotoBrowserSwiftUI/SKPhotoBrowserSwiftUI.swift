@@ -263,7 +263,7 @@ private struct PhotoBrowserModifier: ViewModifier {
                     .ignoresSafeArea()
             }
             .transaction({ transaction in
-                transaction.disablesAnimations = true
+                transaction.disablesAnimations = isPresented
             })
     }
 }
