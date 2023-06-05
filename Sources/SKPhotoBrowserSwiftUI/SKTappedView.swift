@@ -96,7 +96,6 @@ class TappedModel {
     private var contentVc: UIViewController!
     
     private var uiViews: [UIView]?
-    private var initialUIView: UIView?
     private var contentViewModel = SKContentViewModel()
     
     static func show<Content: View>(from uiView: UIView?, images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: SKPhotoBrowserSwiftUI.CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil, @ViewBuilder content: (SKContentViewModel) -> Content) {
@@ -106,71 +105,48 @@ class TappedModel {
             let model = TappedModel(images: images, urls: urls, page: page, closeImage: closeImage, deleteImage: deleteImage, displayCloseButton: displayCloseButton, enableSingleTapDismiss: enableSingleTapDismiss, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY, loadImageBlock: loadImageBlock, didShowPhotoAtIndex: didShowPhotoAtIndex)
             model.contentViewModel.selectedIndex = page
             model.contentVc = UIHostingController(rootView: content(model.contentViewModel))
-            let browser = model.config()
-            func findInitialImage(from uiView: UIView, size: CGSize) -> UIView {
-                func loop(uiView: UIView) -> UIView? {
-                    func sizeEqual(size1: CGSize, size2: CGSize) -> Bool {
-                        return Int(size1.width - size2.width) == 0 && Int(size1.height - size2.height) == 0
-                    }
-                    if let sp = uiView.superview {
-                        if let ssp = sp.superview, let index = ssp.subviews.firstIndex(of: sp), index + 1 < ssp.subviews.count {
-                            let nextView = ssp.subviews[index + 1]
-                            if sizeEqual(size1: nextView.frame.size, size2: size) {
-                                return nextView
+            model.config { browser in
+                if images.wrappedValue.count > 1 || urls.wrappedValue.count > 1 {
+                    func findAllUIViews(from superview: UIView) -> [UIView] {
+                        var uiViews: [UIView] = []
+                        func loop(_superview: UIView) -> [UIView] {
+                            var _uiViews: [UIView] = []
+                            for subview in _superview.subviews {
+                                if subview.tag == tappedViewTag {
+                                    _uiViews.append(subview)
+                                    break
+                                }
+                                else {
+                                    _uiViews.append(contentsOf: loop(_superview: subview))
+                                }
                             }
+                            return _uiViews
+                        }
+                        uiViews.append(contentsOf: loop(_superview: superview))
+                        let maxCount = max(images.wrappedValue.count, urls.wrappedValue.count)
+                        if uiViews.count == maxCount {
+                            return uiViews
+                        }
+                        else if uiViews.count > maxCount, let index = uiViews.firstIndex(of: uiView), index >= page, index - page + maxCount <= uiViews.count {
+                            return Array(uiViews.suffix(from: index - page).prefix(maxCount))
+                        }
+                        if let superview = superview.superview {
+                            return findAllUIViews(from: superview)
                         }
                         else {
-                            return loop(uiView: sp)
+                            return []
                         }
                     }
-                    return nil
+                    
+                    let uiViews = findAllUIViews(from: uiView)
+                    model.uiViews = uiViews.isEmpty ? [uiView] : uiViews
                 }
-                if uiView.tag == tappedViewTag {
-                    return loop(uiView: uiView) ?? uiView
+                else {
+                    model.uiViews = [uiView]
                 }
-                return uiView
+                controller.present(browser, animated: true)
+                uiView.tappedModel = model
             }
-            if images.wrappedValue.count > 1 || urls.wrappedValue.count > 1 {
-                func findAllUIViews(from superview: UIView) -> [UIView] {
-                    var uiViews: [UIView] = []
-                    func loop(_superview: UIView) -> [UIView] {
-                        var _uiViews: [UIView] = []
-                        for subview in _superview.subviews {
-                            if subview.tag == tappedViewTag {
-                                _uiViews.append(subview)
-                                break
-                            }
-                            else {
-                                _uiViews.append(contentsOf: loop(_superview: subview))
-                            }
-                        }
-                        return _uiViews
-                    }
-                    uiViews.append(contentsOf: loop(_superview: superview))
-                    let maxCount = max(images.wrappedValue.count, urls.wrappedValue.count)
-                    if uiViews.count == maxCount {
-                        return uiViews
-                    }
-                    else if uiViews.count > maxCount, let index = uiViews.firstIndex(of: uiView), index >= page, index - page + maxCount <= uiViews.count {
-                        return Array(uiViews.suffix(from: index - page).prefix(maxCount))
-                    }
-                    if let superview = superview.superview {
-                        return findAllUIViews(from: superview)
-                    }
-                    else {
-                        return []
-                    }
-                }
-                
-                let uiViews = findAllUIViews(from: uiView)
-                model.uiViews = uiViews.isEmpty ? [uiView] : uiViews
-            }
-            else {
-                model.uiViews = [uiView]
-            }
-            model.initialUIView = findInitialImage(from: uiView, size: uiView.frame.size)
-            controller.present(browser, animated: true)
-            uiView.tappedModel = model
         }
     }
     
@@ -227,7 +203,7 @@ class TappedModel {
         }
     }
     
-    private func config() -> SKPhotoBrowser {
+    private func config(completion: @escaping (SKPhotoBrowser) -> Void) {
         SKPhotoBrowserOptions.displayCloseButton = displayCloseButton
         if let displayDeleteButton = displayDeleteButton {
             SKPhotoBrowserOptions.displayDeleteButton = displayDeleteButton
@@ -270,6 +246,7 @@ class TappedModel {
         SKPhotoBrowserOptions.displayPagingHorizontalScrollIndicator = false
         
         var photos: [SKPhotoProtocol] = []
+        var initialPhoto: SKPhoto? = nil
         if !images.isEmpty {
             photos = images.map({ SKPhoto.photoWithImage($0) })
         }
@@ -279,10 +256,32 @@ class TappedModel {
                 photo.loadImageBlock = loadImageBlock
                 return photo
             }
+            if page < photos.count {
+                initialPhoto = photos[page] as? SKPhoto
+            }
         }
-        let browser = SKPhotoBrowser(photos: photos, initialPageIndex: page)
-        browser.delegate = self
-        return browser
+        
+        let returnBlock: ([SKPhotoProtocol]) -> Void = { photos in
+            let browser = SKPhotoBrowser(photos: photos, initialPageIndex: self.page)
+            browser.delegate = self
+            completion(browser)
+        }
+        
+        if let initialPhoto = initialPhoto,
+           let loadImageBlock = initialPhoto.loadImageBlock,
+           let url = URL(string: initialPhoto.photoURL)
+        {
+            loadImageBlock(url) { image, error in
+                if let image = image {
+                    initialPhoto.underlyingImage = image
+                    photos[self.page] = initialPhoto
+                }
+                returnBlock(photos)
+            }
+        }
+        else {
+            returnBlock(photos)
+        }
     }
 }
 
@@ -365,10 +364,6 @@ extension TappedModel: SKPhotoBrowserDelegate {
             browser.updateDeleteButton(delete)
         }
         
-        if let initialUIView = initialUIView {
-            self.initialUIView = nil
-            return initialUIView
-        }
         return uiViews != nil && index < uiViews!.count ? uiViews?[index] : (uiViews?.first ?? nil)
     }
     
