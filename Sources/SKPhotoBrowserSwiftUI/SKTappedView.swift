@@ -283,25 +283,8 @@ class TappedModel {
             returnBlock(photos)
         }
     }
-}
-
-extension TappedModel: SKPhotoBrowserDelegate {
-    public func didShowPhotoAtIndex(_ browser: SKPhotoBrowser, index: Int) {
-        didShowPhotoAtIndex?(index)
-        
-        if contentVc.view.superview == nil {
-            browser.addChild(contentVc)
-            browser.view.addSubview(contentVc.view)
-            contentVc.view.frame = browser.view.bounds
-            contentVc.view.backgroundColor = .clear
-            contentVc.view.isUserInteractionEnabled = false
-        }
-        withAnimation {
-            contentViewModel.selectedIndex = index
-        }
-    }
     
-    public func willDismissAtPageIndex(_ index: Int) {
+    private func restore() {
         if let originalDisplayDeleteButton = originalDisplayDeleteButton {
             SKPhotoBrowserOptions.displayDeleteButton = originalDisplayDeleteButton
         }
@@ -332,6 +315,27 @@ extension TappedModel: SKPhotoBrowserDelegate {
             SKCounterOptions.counterExtraMarginY = originalCounterExtraMarginY
         }
     }
+}
+
+extension TappedModel: SKPhotoBrowserDelegate {
+    public func didShowPhotoAtIndex(_ browser: SKPhotoBrowser, index: Int) {
+        didShowPhotoAtIndex?(index)
+        
+        if contentVc.view.superview == nil {
+            browser.addChild(contentVc)
+            browser.view.addSubview(contentVc.view)
+            contentVc.view.frame = browser.view.bounds
+            contentVc.view.backgroundColor = .clear
+            contentVc.view.isUserInteractionEnabled = false
+        }
+        withAnimation {
+            contentViewModel.selectedIndex = index
+        }
+    }
+    
+    public func willDismissAtPageIndex(_ index: Int) {
+        restore()
+    }
     
     public func willShowActionSheet(_ photoIndex: Int) {
         // do some handle if you need
@@ -339,6 +343,7 @@ extension TappedModel: SKPhotoBrowserDelegate {
     
     public func didDismissAtPageIndex(_ index: Int) {
         uiViews?.removeAll()
+        restore()
     }
     
     public func didDismissActionSheetWithButtonIndex(_ buttonIndex: Int, photoIndex: Int) {

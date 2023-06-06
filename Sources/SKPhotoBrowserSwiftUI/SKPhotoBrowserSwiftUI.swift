@@ -171,11 +171,7 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
             }
         }
         
-        public func didShowPhotoAtIndex(_ browser: SKPhotoBrowser, index: Int) {
-            parent.didShowPhotoAtIndex?(index)
-        }
-        
-        public func willDismissAtPageIndex(_ index: Int) {
+        private func restore() {
             if let originalDisplayDeleteButton = originalDisplayDeleteButton {
                 SKPhotoBrowserOptions.displayDeleteButton = originalDisplayDeleteButton
             }
@@ -207,12 +203,20 @@ public struct SKPhotoBrowserSwiftUI: UIViewControllerRepresentable {
             }
         }
         
+        public func didShowPhotoAtIndex(_ browser: SKPhotoBrowser, index: Int) {
+            parent.didShowPhotoAtIndex?(index)
+        }
+        
+        public func willDismissAtPageIndex(_ index: Int) {
+            restore()
+        }
+        
         public func willShowActionSheet(_ photoIndex: Int) {
             // do some handle if you need
         }
         
         public func didDismissAtPageIndex(_ index: Int) {
-            
+            restore()
         }
         
         public func didDismissActionSheetWithButtonIndex(_ buttonIndex: Int, photoIndex: Int) {
