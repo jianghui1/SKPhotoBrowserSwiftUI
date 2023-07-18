@@ -98,7 +98,7 @@ class TappedModel {
     private var uiViews: [UIView]?
     private var contentViewModel = SKContentViewModel()
     
-    static func show<Content: View>(from uiView: UIView?, images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: SKPhotoBrowserSwiftUI.CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil, @ViewBuilder content: (SKContentViewModel) -> Content) {
+    static func show<Content: View>(from uiView: UIView?, images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, onlyOneUIView: Bool = false, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: SKPhotoBrowserSwiftUI.CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil, @ViewBuilder content: (SKContentViewModel) -> Content) {
         if let uiView = uiView,
            let controller = uiView.window?.rootViewController
         {
@@ -106,43 +106,48 @@ class TappedModel {
             model.contentViewModel.selectedIndex = page
             model.contentVc = UIHostingController(rootView: content(model.contentViewModel))
             model.config { browser in
-                if images.wrappedValue.count > 1 || urls.wrappedValue.count > 1 {
-                    func findAllUIViews(from superview: UIView) -> [UIView] {
-                        var uiViews: [UIView] = []
-                        func loop(_superview: UIView) -> [UIView] {
-                            var _uiViews: [UIView] = []
-                            for subview in _superview.subviews {
-                                if subview.tag == tappedViewTag {
-                                    _uiViews.append(subview)
-                                    break
-                                }
-                                else {
-                                    _uiViews.append(contentsOf: loop(_superview: subview))
-                                }
-                            }
-                            return _uiViews
-                        }
-                        uiViews.append(contentsOf: loop(_superview: superview))
-                        let maxCount = max(images.wrappedValue.count, urls.wrappedValue.count)
-                        if uiViews.count == maxCount {
-                            return uiViews
-                        }
-                        else if uiViews.count > maxCount, let index = uiViews.firstIndex(of: uiView), index >= page, index - page + maxCount <= uiViews.count {
-                            return Array(uiViews.suffix(from: index - page).prefix(maxCount))
-                        }
-                        if let superview = superview.superview {
-                            return findAllUIViews(from: superview)
-                        }
-                        else {
-                            return []
-                        }
-                    }
-                    
-                    let uiViews = findAllUIViews(from: uiView)
-                    model.uiViews = uiViews.isEmpty ? [uiView] : uiViews
+                if onlyOneUIView {
+                    model.uiViews = [uiView]
                 }
                 else {
-                    model.uiViews = [uiView]
+                    if images.wrappedValue.count > 1 || urls.wrappedValue.count > 1 {
+                        func findAllUIViews(from superview: UIView) -> [UIView] {
+                            var uiViews: [UIView] = []
+                            func loop(_superview: UIView) -> [UIView] {
+                                var _uiViews: [UIView] = []
+                                for subview in _superview.subviews {
+                                    if subview.tag == tappedViewTag {
+                                        _uiViews.append(subview)
+                                        break
+                                    }
+                                    else {
+                                        _uiViews.append(contentsOf: loop(_superview: subview))
+                                    }
+                                }
+                                return _uiViews
+                            }
+                            uiViews.append(contentsOf: loop(_superview: superview))
+                            let maxCount = max(images.wrappedValue.count, urls.wrappedValue.count)
+                            if uiViews.count == maxCount {
+                                return uiViews
+                            }
+                            else if uiViews.count > maxCount, let index = uiViews.firstIndex(of: uiView), index >= page, index - page + maxCount <= uiViews.count {
+                                return Array(uiViews.suffix(from: index - page).prefix(maxCount))
+                            }
+                            if let superview = superview.superview {
+                                return findAllUIViews(from: superview)
+                            }
+                            else {
+                                return []
+                            }
+                        }
+                        
+                        let uiViews = findAllUIViews(from: uiView)
+                        model.uiViews = uiViews.isEmpty ? [uiView] : uiViews
+                    }
+                    else {
+                        model.uiViews = [uiView]
+                    }
                 }
                 controller.present(browser, animated: true)
                 uiView.tappedModel = model
@@ -383,8 +388,8 @@ extension View {
             EmptyView()
         }
     }
-    public func tapped<Content: View>(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: SKPhotoBrowserSwiftUI.CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil, @ViewBuilder content: @escaping (SKContentViewModel) -> Content) -> some View {
-        modifier(TappedModifier(images: images, urls: urls, page: page, closeImage: closeImage, deleteImage: deleteImage, displayCloseButton: displayCloseButton, enableSingleTapDismiss: enableSingleTapDismiss, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY, loadImageBlock: loadImageBlock, didShowPhotoAtIndex: didShowPhotoAtIndex, contentView: content))
+    public func tapped<Content: View>(images: Binding<[UIImage]> = .constant([]), urls: Binding<[String]> = .constant([]), page: Int = 0, onlyOneUIView: Bool = false, closeImage: UIImage? = nil, deleteImage: UIImage? = nil, displayCloseButton: Bool = false, enableSingleTapDismiss: Bool = true, displayDeleteButton: Bool? = nil, actionBackgroundColor: UIColor? = nil, actionTextColor: UIColor? = nil, actionFont: UIFont? = nil, actionTextShadowColor: UIColor? = nil, closeButtonPadding: CGPoint? = nil, closeButtonInsets: UIEdgeInsets? = nil, deleteButtonPadding: CGPoint? = nil, deleteButtonInsets: UIEdgeInsets? = nil, counterLocaton: SKPhotoBrowserSwiftUI.CounterLocation? = nil, counterExtraMarginY: CGFloat? = nil, loadImageBlock: ((URL, @escaping (UIImage?, Error?) -> Void) -> Void)? = nil, didShowPhotoAtIndex: ((Int) -> Void)? = nil, @ViewBuilder content: @escaping (SKContentViewModel) -> Content) -> some View {
+        modifier(TappedModifier(images: images, urls: urls, page: page, onlyOneUIView: onlyOneUIView, closeImage: closeImage, deleteImage: deleteImage, displayCloseButton: displayCloseButton, enableSingleTapDismiss: enableSingleTapDismiss, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY, loadImageBlock: loadImageBlock, didShowPhotoAtIndex: didShowPhotoAtIndex, contentView: content))
     }
 }
 
@@ -392,6 +397,7 @@ private struct TappedModifier<ContentView: View>: ViewModifier {
     @Binding public var images: [UIImage]
     @Binding public var urls: [String]
     public let page: Int
+    public let onlyOneUIView: Bool
     public let closeImage: UIImage?
     public let deleteImage: UIImage?
     public let displayCloseButton: Bool
@@ -416,7 +422,7 @@ private struct TappedModifier<ContentView: View>: ViewModifier {
             .allowsHitTesting(false)
             .background(
                 SKTappedView { uiView in
-                    TappedModel.show(from: uiView, images: $images, urls: $urls, page: page, closeImage: closeImage, deleteImage: deleteImage, displayCloseButton: displayCloseButton, enableSingleTapDismiss: enableSingleTapDismiss, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY, loadImageBlock: loadImageBlock, didShowPhotoAtIndex: didShowPhotoAtIndex, content: contentView)
+                    TappedModel.show(from: uiView, images: $images, urls: $urls, page: page, onlyOneUIView: onlyOneUIView, closeImage: closeImage, deleteImage: deleteImage, displayCloseButton: displayCloseButton, enableSingleTapDismiss: enableSingleTapDismiss, displayDeleteButton: displayDeleteButton, actionBackgroundColor: actionBackgroundColor, actionTextColor: actionTextColor, actionFont: actionFont, actionTextShadowColor: actionTextShadowColor, closeButtonPadding: closeButtonPadding, closeButtonInsets: closeButtonInsets, deleteButtonPadding: deleteButtonPadding, deleteButtonInsets: deleteButtonInsets, counterLocaton: counterLocaton, counterExtraMarginY: counterExtraMarginY, loadImageBlock: loadImageBlock, didShowPhotoAtIndex: didShowPhotoAtIndex, content: contentView)
                 }
             )
     }
