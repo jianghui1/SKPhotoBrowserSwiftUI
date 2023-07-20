@@ -366,7 +366,6 @@ extension TappedModel: SKPhotoBrowserDelegate {
     }
     
     public func viewForPhoto(_ browser: SKPhotoBrowser, index: Int) -> UIView? {
-        
         if let closeImage = closeImage {
             browser.updateCloseButton(closeImage)
         }
@@ -375,6 +374,10 @@ extension TappedModel: SKPhotoBrowserDelegate {
         }
         
         return uiViews != nil && index < uiViews!.count ? uiViews?[index] : (uiViews?.first ?? nil)
+    }
+    
+    public func dismissToIndexForPhoto(_ browser: SKPhotoBrowser, index: Int) -> Int {
+        uiViews != nil ? (uiViews!.count <= index ? 0 : index) : index
     }
     
     public func captionViewForPhotoAtIndex(index: Int) -> SKCaptionView? {

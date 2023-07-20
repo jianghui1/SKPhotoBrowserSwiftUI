@@ -5,7 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jianghui1/SKPhotoBrowser.git",
       "state" : {
-        "revision" : "be7bf85a950c9f1017a59e8aa6e27f70b9ea5c88"
+        "branch" : "master",
+        "revision" : "6d0ab6da541998cf232e4c3ad24de2c5d888b55b"
       }
     }
   ],
